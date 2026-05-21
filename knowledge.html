@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>場勘專業知識資料庫 - EventScout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'Noto Sans TC', 'sans-serif'], } } } }
+  </script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: 'Noto Sans TC', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#F6F8F9] dark:bg-[#15151A] text-slate-800 dark:text-slate-200 transition-colors duration-300">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    const data = {
+      checklists: [
+        { title: "企業年會/論壇", items: ["16:9 vs 4:3 投影幕比例評估", "場地殘響時間計算與吸音需求", "舞台負載強度檢查", "VIP 休息室出入動線規劃"] },
+        { title: "戶外市集/音樂祭", items: ["單相/三相電力供電配置", "草地負載能力與雨天積水備案", "流動廁所配置比 (人流換算)", "場內垃圾清運路線與動線"] },
+        { title: "展覽/快閃店", items: ["場地壁面釘裝規範與限制", "撤場時程與貨梯進場限制", "夜間施工噪音與規範權限"] }
+      ],
+      blindSpots: [
+        { title: "電力計算學", desc: "音響(W) + 燈光(W) + LED(W) = 總安培(A)。別再讓電力跳電！教你計算負載的基本原理。" },
+        { title: "Rigging 吊點安全", desc: "鋼樑負載上限如何確認？消防逃生通道與存留人數的硬性規定對策。" },
+        { title: "無線訊號評估", desc: "千人活動現場的 Wi-Fi 與 5G 訊號強化策略，訊號衰減的根本原因分析。" }
+      ],
+      cases: [
+        { title: "被遺忘的 2 公分", desc: "因為一個門框高度，30 萬 LED 背板進不了電梯：不可不知的現場貨梯測量細節。", tag: "血淚談" }
+      ]
+    };
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('checklist');
+
+      return (
+        <div className="max-w-5xl mx-auto px-6 py-12">
+          <header className="mb-12 text-center">
+            <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4">場勘專業知識資料庫</h1>
+            <p className="text-slate-600 dark:text-slate-400">從硬體盲點到實戰避坑，為專業活動人打造的技術字典。</p>
+          </header>
+
+          <div className="flex gap-2 mb-8 justify-center">
+            {['checklist', 'blindspot', 'cases'].map((t, i) => (
+              <button key={t} onClick={() => setActiveTab(t)} className={`px-6 py-2 rounded-full font-bold transition ${activeTab === t ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-[#202024] hover:bg-slate-200'}`}>
+                {t === 'checklist' ? '究極檢核表' : t === 'blindspot' ? '硬體法規盲點' : '實戰避坑'}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid gap-6">
+            {activeTab === 'checklist' && data.checklists.map((c, i) => (
+              <div key={i} className="bg-white dark:bg-[#202024] p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                <h3 className="text-xl font-bold mb-4 text-indigo-600 dark:text-indigo-400">{c.title}</h3>
+                <ul className="grid sm:grid-cols-2 gap-3">
+                  {c.items.map((item, j) => <li key={j} className="flex items-center gap-2 text-sm"><span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>{item}</li>)}
+                </ul>
+              </div>
+            ))}
+
+            {activeTab === 'blindspot' && data.blindSpots.map((b, i) => (
+              <div key={i} className="bg-white dark:bg-[#202024] p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 hover:border-indigo-500 transition">
+                <h3 className="text-xl font-bold mb-2">{b.title}</h3>
+                <p className="text-slate-600 dark:text-slate-400 text-sm">{b.desc}</p>
+              </div>
+            ))}
+
+            {activeTab === 'cases' && data.cases.map((c, i) => (
+              <div key={i} className="bg-indigo-900 text-white p-8 rounded-2xl">
+                <span className="text-xs bg-indigo-500 px-3 py-1 rounded-full uppercase">{c.tag}</span>
+                <h3 className="text-2xl font-bold my-4">{c.title}</h3>
+                <p className="text-indigo-200 mb-6">{c.desc}</p>
+                <button className="bg-white text-indigo-900 px-6 py-2 rounded-lg font-bold">閱讀完整故事</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
