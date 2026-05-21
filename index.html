@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EventScout - 場勘與佈置的專業小幫手</title>
+  <title>EventScout - 場勘與佈置小幫手</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -54,6 +54,12 @@
       .print\:w-full { width: 100% !important; }
       .print\:absolute { position: absolute !important; }
       .print\:inset-0 { inset: 0 !important; }
+      .print-a4 {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+      }
     }
   </style>
 </head>
@@ -313,6 +319,19 @@
             <path d="m17 14 3-3-3-3h3L12 2 4 8h3L4 11l3 3H4l8 8 8-8z" />
             <line x1="12" y1="18" x2="12" y2="22" />
           </svg>
+        ),
+        menu: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        ),
+        x: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         )
       };
       return icons[name] || null;
@@ -322,6 +341,7 @@
     function EventScoutApp() {
       const [activeTab, setActiveTab] = useState('home');
       const [theme, setTheme] = useState('light'); // 'light' or 'dark'
+      const [isSidebarOpen, setIsSidebarOpen] = useState(false); // 控制行動端抽屜狀態
 
       const toggleTheme = () => {
         setTheme(prev => {
@@ -335,20 +355,67 @@
         });
       };
 
+      // 每次導頁時自動將行動版側邊欄收合
+      const handleTabChange = (tabId) => {
+        setActiveTab(tabId);
+        setIsSidebarOpen(false);
+      };
+
       return (
         <div className="flex h-screen bg-[#F6F8F9] dark:bg-[#15151A] text-slate-800 dark:text-slate-200 overflow-hidden transition-colors duration-300">
           
-          {/* Sidebar - Asana Style */}
-          <aside className="w-64 bg-white dark:bg-[#202024] border-r border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 z-20 print:hidden transition-colors duration-300">
-            <div className="p-6 flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                  <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center">
-                    <Icon name="settings" className="w-4 h-4 text-white animate-spin-slow" />
-                  </div>
-                  EventScout
-                </h1>
+          {/* 行動端頂部導覽列 Bar */}
+          <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#202024] border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shrink-0 z-20 print:hidden transition-colors duration-300">
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-400 focus:outline-none"
+              aria-label="開啟選單"
+            >
+              <Icon name="menu" className="w-6 h-6" />
+            </button>
+            <span className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <div className="w-5 h-5 rounded bg-indigo-600 flex items-center justify-center">
+                <Icon name="settings" className="w-3 h-3 text-white" />
               </div>
+              EventScout
+            </span>
+            <button 
+              onClick={toggleTheme}
+              className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-400"
+            >
+              {theme === 'light' ? <Icon name="moon" className="w-5 h-5" /> : <Icon name="sun" className="w-5 h-5" />}
+            </button>
+          </header>
+
+          {/* 行動端選單滑出時的背影半透明遮罩 Overlay */}
+          {isSidebarOpen && (
+            <div 
+              onClick={() => setIsSidebarOpen(false)} 
+              className="lg:hidden fixed inset-0 bg-black/50 z-30 transition-opacity duration-300"
+            />
+          )}
+
+          {/* Sidebar - Asana Style (支援響應式滑動與桌機常開) */}
+          <aside className={`
+            fixed lg:relative inset-y-0 left-0 w-64 bg-white dark:bg-[#202024] border-r border-slate-200 dark:border-slate-800 
+            flex flex-col flex-shrink-0 z-40 transition-transform duration-300 print:hidden lg:translate-x-0 
+            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}>
+            <div className="p-6 flex items-center justify-between">
+              <h1 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center">
+                  <Icon name="settings" className="w-4 h-4 text-white" />
+                </div>
+                EventScout
+              </h1>
+              {/* 行動端專用關閉鈕 */}
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="lg:hidden p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-400"
+                aria-label="關閉選單"
+              >
+                <Icon name="x" className="w-5 h-5" />
+              </button>
             </div>
             
             <nav className="flex-1 px-3 space-y-1 mt-2">
@@ -356,7 +423,7 @@
                 icon={<Icon name="home" />} 
                 label="首頁介紹" 
                 isActive={activeTab === 'home'} 
-                onClick={() => setActiveTab('home')} 
+                onClick={() => handleTabChange('home')} 
               />
               <div className="pt-4 pb-2 px-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 工作區
@@ -365,19 +432,19 @@
                 icon={<Icon name="box" />} 
                 label="Truss 架構圖" 
                 isActive={activeTab === 'truss'} 
-                onClick={() => setActiveTab('truss')} 
+                onClick={() => handleTabChange('truss')} 
               />
               <NavItem 
                 icon={<Icon name="map" />} 
                 label="平面圖繪製" 
                 isActive={activeTab === 'floorplan'} 
-                onClick={() => setActiveTab('floorplan')} 
+                onClick={() => handleTabChange('floorplan')} 
               />
               <NavItem 
                 icon={<Icon name="fileText" />} 
                 label="場勘報告匯出" 
                 isActive={activeTab === 'report'} 
-                onClick={() => setActiveTab('report')} 
+                onClick={() => handleTabChange('report')} 
               />
             </nav>
             
@@ -397,9 +464,9 @@
             </div>
           </aside>
 
-          {/* Main Content Area */}
-          <main className="flex-1 overflow-y-auto relative print:w-full print:absolute print:inset-0 bg-[#F6F8F9] dark:bg-[#15151A] transition-colors duration-300">
-            {activeTab === 'home' && <HomeTab onNavigate={setActiveTab} />}
+          {/* Main Content Area (行動端需保留上邊界以預留 header 位置) */}
+          <main className="flex-1 overflow-y-auto relative pt-14 lg:pt-0 print:pt-0 print:w-full print:absolute print:inset-0 bg-[#F6F8F9] dark:bg-[#15151A] transition-colors duration-300">
+            {activeTab === 'home' && <HomeTab onNavigate={handleTabChange} />}
             {activeTab === 'truss' && <TrussTab />}
             {activeTab === 'floorplan' && <FloorPlanTab />}
             {activeTab === 'report' && <ReportTab />}
@@ -428,23 +495,23 @@
       return (
         <div className="min-h-full pb-12 animate-in fade-in duration-500">
           {/* Header Area */}
-          <div className="px-10 pt-12 pb-8 bg-white dark:bg-[#202024] border-b border-slate-200 dark:border-slate-800 transition-colors">
+          <div className="px-6 sm:px-10 pt-10 sm:pt-12 pb-8 bg-white dark:bg-[#202024] border-b border-slate-200 dark:border-slate-800 transition-colors">
             <div className="max-w-5xl mx-auto">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-6">
                 <Icon name="sparkles" className="w-3.5 h-3.5" />
                 <span>全新上線！專為活動企劃與硬體廠商打造</span>
               </div>
-              <h1 className="text-3xl md:text-5xl font-extrabold mb-4 text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-3xl md:text-5xl font-extrabold mb-4 text-slate-900 dark:text-white tracking-tight leading-tight">
                 場勘與佈置的專業小幫手
               </h1>
-              <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed mb-8">
+              <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed mb-8">
                 無論是舞台設計、動線規劃還是硬體設備紀錄，EventScout 都能幫助您快速生成標準化圖面與報告，讓提案品質大幅提升、發包更準確。
               </p>
-              <div className="flex gap-4">
-                <button onClick={() => onNavigate('truss')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2 text-sm">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <button onClick={() => onNavigate('truss')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-colors flex items-center justify-center gap-2 text-sm">
                   開始繪製結構圖
                 </button>
-                <button onClick={() => onNavigate('floorplan')} className="bg-white dark:bg-[#2A2B30] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#323338] px-6 py-3 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2 text-sm">
+                <button onClick={() => onNavigate('floorplan')} className="bg-white dark:bg-[#2A2B30] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#323338] px-6 py-3 rounded-lg font-medium shadow-sm transition-colors flex items-center justify-center gap-2 text-sm">
                   <Icon name="penTool" className="w-4 h-4" />
                   繪製動線平面圖
                 </button>
@@ -453,7 +520,7 @@
           </div>
 
           {/* Features Section */}
-          <div className="max-w-5xl mx-auto px-10 mt-12">
+          <div className="max-w-5xl mx-auto px-6 sm:px-10 mt-10 sm:mt-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FeatureCard 
                 icon={<Icon name="box" className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />}
@@ -659,7 +726,7 @@
 
       return (
         <div className="h-full flex flex-col animate-in fade-in transition-colors">
-          <div className="px-8 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#202024] flex justify-between items-center shrink-0">
+          <div className="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#202024] flex flex-col sm:flex-row justify-between sm:items-center gap-3 shrink-0">
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Icon name="box" className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -668,15 +735,15 @@
             </div>
             <button 
               onClick={handleExport}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 shadow-sm transition-colors text-sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-colors text-sm"
             >
               <Icon name="download" className="w-4 h-4" /> 匯出白底圖面
             </button>
           </div>
 
-          <div className="flex flex-1 min-h-0">
-            {/* Controls Panel */}
-            <div className="w-80 bg-white dark:bg-[#202024] border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-5 overflow-y-auto custom-scrollbar">
+          <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+            {/* Controls Panel (桌機寬度 80，行動端全寬自適應) */}
+            <div className="w-full lg:w-80 bg-white dark:bg-[#202024] lg:border-r border-b lg:border-b-0 border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-5 overflow-y-auto custom-scrollbar shrink-0">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">結構類型</label>
                 <div className="flex gap-2">
@@ -731,11 +798,11 @@
             </div>
 
             {/* Canvas Preview Area */}
-            <div className="flex-1 bg-[#F6F8F9] dark:bg-[#15151A] flex items-center justify-center p-8 overflow-hidden">
-              <div className="shadow-lg border border-slate-200 dark:border-slate-800 bg-white">
+            <div className="flex-1 bg-[#F6F8F9] dark:bg-[#15151A] flex items-center justify-center p-4 sm:p-8 overflow-auto min-h-[350px]">
+              <div className="shadow-lg border border-slate-200 dark:border-slate-800 bg-white max-w-full">
                 <canvas 
                   ref={canvasRef} 
-                  className="max-w-full max-h-full object-contain block"
+                  className="max-w-full object-contain block"
                 ></canvas>
               </div>
             </div>
@@ -747,10 +814,11 @@
     function FloorPlanTab() {
       const canvasRef = useRef(null);
       const [leftTab, setLeftTab] = useState('library'); 
+      const [mobileSubTab, setMobileSubTab] = useState('canvas'); // 行動端專用分頁狀態：'library' | 'canvas' | 'settings'
       
       const [items, setItems] = useState([
-        { id: 1, type: 'rect', cx: 400, cy: 200, w: 200, h: 80, label: '主舞台', color: '#fef3c7', rotation: 0, scale: 1 },
-        { id: 2, type: 'rect', cx: 400, cy: 400, w: 100, h: 40, label: '控台 (PA)', color: '#e0f2fe', rotation: 0, scale: 1 }
+        { id: 1, type: 'rect', cx: 400, cy: 160, w: 200, h: 80, label: '主舞台', color: '#fef3c7', rotation: 0, scale: 1 },
+        { id: 2, type: 'rect', cx: 400, cy: 380, w: 100, h: 40, label: '控台 (PA)', color: '#e0f2fe', rotation: 0, scale: 1 }
       ]);
       const [selectedId, setSelectedId] = useState(null);
       const [draggingId, setDraggingId] = useState(null);
@@ -805,6 +873,19 @@
         };
       };
 
+      // 支援行動端觸控點定位
+      const getTouchPos = (canvas, evt) => {
+        if (!evt.touches || evt.touches.length === 0) return { x: 0, y: 0 };
+        const touch = evt.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return { 
+          x: (touch.clientX - rect.left) * scaleX, 
+          y: (touch.clientY - rect.top) * scaleY 
+        };
+      };
+
       const isPointInRotatedRect = (pos, item) => {
         const dx = pos.x - item.cx;
         const dy = pos.y - item.cy;
@@ -828,10 +909,8 @@
         return inside;
       };
 
-      const handleMouseDown = (e) => {
-        const canvas = canvasRef.current;
-        const pos = getMousePos(canvas, e);
-        
+      // 整合滑鼠按下與觸碰開始的核心邏輯
+      const handleCanvasStart = (pos) => {
         if (mode === 'draw_polygon') {
           if (polygonPoints.length > 2) {
             const firstPt = polygonPoints[0];
@@ -862,9 +941,7 @@
         }
       };
 
-      const handleMouseMove = (e) => {
-        const canvas = canvasRef.current;
-        const pos = getMousePos(canvas, e);
+      const handleCanvasMove = (pos) => {
         setMousePos(pos);
 
         if (draggingId) {
@@ -885,7 +962,7 @@
         }
       };
 
-      const handleMouseUp = () => { setDraggingId(null); };
+      const handleCanvasEnd = () => { setDraggingId(null); };
 
       const handleDoubleClick = () => {
         if (mode === 'draw_polygon' && polygonPoints.length >= 3) finishPolygon();
@@ -898,10 +975,12 @@
         const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
         setItems([...items, { 
           id: newId, type: 'polygon', points: polygonPoints, 
-          label: '不規則區域', color: '#fef08a' 
+          label: '不規則區域', color: '#fef3c7' 
         }]);
         setPolygonPoints([]);
         setMode('select');
+        // 畫完後在行動版切換回畫布視角
+        setMobileSubTab('canvas');
       };
 
       const addLibraryItem = (libItem) => {
@@ -912,15 +991,80 @@
         }]);
         setSelectedId(newId);
         setMode('select');
+        // 點選新增後，行動版自動切換到畫布視圖以便看見
+        setMobileSubTab('canvas');
       };
 
       const updateItem = (id, field, value) => {
         setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
       };
 
+      const duplicateItem = (id) => {
+        const itemToCopy = items.find(i => i.id === id);
+        if (itemToCopy) {
+          const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
+          let newItem = { ...itemToCopy, id: newId };
+          newItem.label = newItem.label + ' (複製)';
+          if (newItem.type === 'rect') {
+            newItem.cx += 20;
+            newItem.cy += 20;
+          } else if (newItem.type === 'polygon') {
+            newItem.points = newItem.points.map(p => ({ x: p.x + 20, y: p.y + 20 }));
+          }
+          setItems([...items, newItem]);
+          setSelectedId(newId);
+        }
+      };
+
       const deleteItem = (id) => {
         setItems(items.filter(item => item.id !== id));
         if (selectedId === id) setSelectedId(null);
+      };
+
+      const bringToFront = (id) => {
+        setItems(prev => {
+          const index = prev.findIndex(item => item.id === id);
+          if (index === -1 || index === prev.length - 1) return prev;
+          const newItems = [...prev];
+          const [item] = newItems.splice(index, 1);
+          newItems.push(item);
+          return newItems;
+        });
+      };
+
+      const sendToBack = (id) => {
+        setItems(prev => {
+          const index = prev.findIndex(item => item.id === id);
+          if (index === -1 || index === 0) return prev;
+          const newItems = [...prev];
+          const [item] = newItems.splice(index, 1);
+          newItems.unshift(item);
+          return newItems;
+        });
+      };
+
+      const moveUp = (id) => {
+        setItems(prev => {
+          const index = prev.findIndex(item => item.id === id);
+          if (index === -1 || index === prev.length - 1) return prev;
+          const newItems = [...prev];
+          const temp = newItems[index];
+          newItems[index] = newItems[index + 1];
+          newItems[index + 1] = temp;
+          return newItems;
+        });
+      };
+
+      const moveDown = (id) => {
+        setItems(prev => {
+          const index = prev.findIndex(item => item.id === id);
+          if (index === -1 || index === 0) return prev;
+          const newItems = [...prev];
+          const temp = newItems[index];
+          newItems[index] = newItems[index - 1];
+          newItems[index - 1] = temp;
+          return newItems;
+        });
       };
 
       const clearCanvas = () => {
@@ -961,9 +1105,8 @@
         items.forEach(item => {
           ctx.save();
           const isSelected = item.id === selectedId;
-          ctx.fillStyle = item.color;
           ctx.strokeStyle = isSelected ? '#4f46e5' : '#64748b'; 
-          ctx.lineWidth = isSelected ? 2 : 1;
+          ctx.lineWidth = isSelected ? 2.5 : 1.2;
           
           if (isSelected) {
             ctx.shadowColor = 'rgba(79, 70, 229, 0.4)';
@@ -977,7 +1120,14 @@
             ctx.rotate((item.rotation || 0) * Math.PI / 180);
             ctx.beginPath();
             ctx.roundRect(-actualW / 2, -actualH / 2, actualW, actualH, 4);
-            ctx.fill();
+
+            if (item.color !== 'transparent') {
+              ctx.fillStyle = item.color;
+              ctx.fill();
+            } else if (isSelected) {
+              ctx.fillStyle = 'rgba(79, 70, 229, 0.05)';
+              ctx.fill();
+            }
             ctx.stroke();
 
             ctx.fillStyle = '#1e293b';
@@ -993,7 +1143,14 @@
               if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
             });
             ctx.closePath();
-            ctx.fill();
+
+            if (item.color !== 'transparent') {
+              ctx.fillStyle = item.color;
+              ctx.fill();
+            } else if (isSelected) {
+              ctx.fillStyle = 'rgba(79, 70, 229, 0.05)';
+              ctx.fill();
+            }
             ctx.stroke();
 
             const centroid = getPolygonCentroid(item.points);
@@ -1031,15 +1188,16 @@
       }, [items, selectedId, mode, polygonPoints, mousePos]);
 
       const selectedItem = items.find(i => i.id === selectedId);
+      const reversedItems = [...items].reverse();
 
       return (
         <div className="h-full flex flex-col animate-in fade-in transition-colors">
-          <div className="px-8 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#202024] flex justify-between items-center shrink-0">
+          <div className="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#202024] flex flex-col sm:flex-row justify-between sm:items-center gap-3 shrink-0">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Icon name="map" className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               平面圖繪製與自訂編輯
             </h2>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <button onClick={clearCanvas} className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#2A2B30] px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors border border-slate-200 dark:border-slate-700">
                 <Icon name="rotateCcw" className="w-4 h-4" /> 重設畫布
               </button>
@@ -1054,9 +1212,34 @@
             </div>
           </div>
 
+          {/* RWD 行動端專用：三欄分頁切換按鈕（桌機 lg 隱藏） */}
+          <div className="lg:hidden bg-white dark:bg-[#202024] border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex gap-1 shrink-0">
+            <button 
+              onClick={() => setMobileSubTab('library')} 
+              className={`flex-1 py-2 rounded-md text-xs font-bold text-center border transition-all ${mobileSubTab === 'library' ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30' : 'border-transparent text-slate-500 hover:bg-slate-50 dark:hover:bg-[#2A2B30]'}`}
+            >
+              元件圖庫
+            </button>
+            <button 
+              onClick={() => setMobileSubTab('canvas')} 
+              className={`flex-1 py-2 rounded-md text-xs font-bold text-center border transition-all ${mobileSubTab === 'canvas' ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30' : 'border-transparent text-slate-500 hover:bg-slate-50 dark:hover:bg-[#2A2B30]'}`}
+            >
+              編輯畫布
+            </button>
+            <button 
+              onClick={() => setMobileSubTab('settings')} 
+              className={`flex-1 py-2 rounded-md text-xs font-bold text-center border transition-all ${mobileSubTab === 'settings' ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30' : 'border-transparent text-slate-500 hover:bg-slate-50 dark:hover:bg-[#2A2B30]'}`}
+            >
+              屬性圖層 {selectedItem ? '🔴' : ''}
+            </button>
+          </div>
+
           <div className="flex flex-1 min-h-0 overflow-hidden">
-            {/* Left Panel */}
-            <div className="w-[260px] bg-white dark:bg-[#202024] border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 z-10">
+            {/* Left Panel - 元件庫 (行動端自適應隱藏) */}
+            <div className={`
+              w-full lg:w-[260px] bg-white dark:bg-[#202024] border-r border-slate-200 dark:border-slate-800 
+              flex-col shrink-0 z-10 ${mobileSubTab === 'library' ? 'flex' : 'hidden lg:flex'}
+            `}>
               <div className="flex border-b border-slate-200 dark:border-slate-800">
                 <button 
                   onClick={() => setLeftTab('library')}
@@ -1124,29 +1307,57 @@
               </div>
             </div>
 
-            {/* Center Canvas */}
-            <div className="flex-1 relative flex items-center justify-center p-6 bg-[#F6F8F9] dark:bg-[#15151A] overflow-hidden">
+            {/* Center Canvas (支援完整觸控拖曳及雙點閉合) */}
+            <div className={`
+              flex-1 relative items-center justify-center p-4 bg-[#F6F8F9] dark:bg-[#15151A] overflow-auto
+              ${mobileSubTab === 'canvas' ? 'flex' : 'hidden lg:flex'}
+            `}>
               {mode === 'draw_polygon' && (
                  <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md z-10 pointer-events-none">
-                   正在繪製多邊形：請點擊定點，雙擊滑鼠閉合
+                   正在繪製多邊形：點擊畫布定點，雙擊閉合
                  </div>
               )}
               
               <div className="relative shadow-md border border-slate-200 dark:border-slate-800 bg-white">
                 <canvas 
                   ref={canvasRef}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
+                  onMouseDown={(e) => {
+                    const pos = getMousePos(canvasRef.current, e);
+                    handleCanvasStart(pos);
+                  }}
+                  onMouseMove={(e) => {
+                    const pos = getMousePos(canvasRef.current, e);
+                    handleCanvasMove(pos);
+                  }}
+                  onMouseUp={handleCanvasEnd}
+                  onMouseLeave={handleCanvasEnd}
                   onDoubleClick={handleDoubleClick}
+                  
+                  // 行動端觸控事件註冊，確保平滑操作並避免滾動干擾
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    const pos = getTouchPos(canvasRef.current, e);
+                    handleCanvasStart(pos);
+                  }}
+                  onTouchMove={(e) => {
+                    e.preventDefault();
+                    const pos = getTouchPos(canvasRef.current, e);
+                    handleCanvasMove(pos);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    handleCanvasEnd();
+                  }}
                   className={`${mode === 'draw_polygon' ? 'cursor-crosshair' : (draggingId ? 'cursor-grabbing' : 'cursor-pointer')} max-w-full max-h-full object-contain block`}
                 ></canvas>
               </div>
             </div>
 
-            {/* Right Panel */}
-            <div className="w-[280px] bg-white dark:bg-[#202024] border-l border-slate-200 dark:border-slate-800 flex flex-col shrink-0 z-10 overflow-y-auto custom-scrollbar">
+            {/* Right Panel - 屬性設定 (行動端自適應隱藏) */}
+            <div className={`
+              w-full lg:w-[280px] bg-white dark:bg-[#202024] border-l border-slate-200 dark:border-slate-800 
+              flex-col shrink-0 z-10 overflow-y-auto custom-scrollbar ${mobileSubTab === 'settings' ? 'flex' : 'hidden lg:flex'}
+            `}>
               <div className="p-4 border-b border-slate-100 dark:border-slate-800/50">
                 <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
                   <Icon name="settings" className="w-4 h-4 text-slate-400" /> 元件屬性設定
@@ -1156,6 +1367,7 @@
               {selectedItem ? (
                 <div className="p-5 space-y-6">
                   
+                  {/* 物件名稱 */}
                   <div>
                     <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">自訂名稱</label>
                     <input 
@@ -1165,6 +1377,7 @@
                     />
                   </div>
 
+                  {/* 尺寸微調 */}
                   {selectedItem.type === 'rect' && (
                     <div>
                       <div className="flex justify-between items-center mb-2">
@@ -1191,6 +1404,7 @@
                     </div>
                   )}
 
+                  {/* 旋轉角度 */}
                   {selectedItem.type === 'rect' && (
                     <div>
                       <div className="flex justify-between items-center mb-2">
@@ -1206,6 +1420,7 @@
                     </div>
                   )}
 
+                  {/* 視覺顏色與透明填充 */}
                   <div>
                     <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-3">視覺顏色</label>
                     <div className="flex flex-wrap gap-2">
@@ -1213,17 +1428,76 @@
                         <button
                           key={color}
                           onClick={() => updateItem(selectedItem.id, 'color', color)}
-                          className={`w-6 h-6 rounded-md shadow-sm transition-transform ${selectedItem.color === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-[#202024] ring-slate-400 scale-110' : 'border border-slate-200 dark:border-slate-700 hover:scale-110'}`}
+                          className={`w-7 h-7 rounded-md shadow-sm transition-transform ${selectedItem.color === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-[#202024] ring-indigo-500 scale-110' : 'border border-slate-200 dark:border-slate-700 hover:scale-110'}`}
                           style={{ backgroundColor: color }}
                         />
                       ))}
+                      <button
+                        onClick={() => updateItem(selectedItem.id, 'color', 'transparent')}
+                        className={`w-7 h-7 rounded-md border-2 border-dashed border-slate-400 relative overflow-hidden bg-transparent transition-transform hover:scale-110 ${selectedItem.color === 'transparent' ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-[#202024] ring-indigo-500 scale-110' : ''}`}
+                        title="無填充 (僅外框線)"
+                      >
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-full h-0.5 bg-red-400/80 transform rotate-45"></div>
+                        </div>
+                      </button>
                     </div>
                   </div>
 
-                  <div className="pt-5 border-t border-slate-100 dark:border-slate-800">
-                    <button onClick={() => deleteItem(selectedItem.id)} className="w-full flex items-center justify-center gap-2 py-2 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-bold transition-colors">
-                      <Icon name="trash2" className="w-4 h-4" /> 刪除此元件
-                    </button>
+                  {/* 圖層順序 */}
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">圖層順序調整</label>
+                    <div className="grid grid-cols-4 gap-1">
+                      <button onClick={() => bringToFront(selectedItem.id)} title="最頂層" className="flex flex-col items-center justify-center py-2 px-1 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-[#2A2B30] text-slate-700 dark:text-slate-300 transition-colors">
+                        <span className="text-[9px] font-bold">最頂</span>
+                      </button>
+                      <button onClick={() => moveUp(selectedItem.id)} title="上移一層" className="flex flex-col items-center justify-center py-2 px-1 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-[#2A2B30] text-slate-700 dark:text-slate-300 transition-colors">
+                        <span className="text-[9px] font-bold">上移</span>
+                      </button>
+                      <button onClick={() => moveDown(selectedItem.id)} title="下移一層" className="flex flex-col items-center justify-center py-2 px-1 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-[#2A2B30] text-slate-700 dark:text-slate-300 transition-colors">
+                        <span className="text-[9px] font-bold">下移</span>
+                      </button>
+                      <button onClick={() => sendToBack(selectedItem.id)} title="最底層" className="flex flex-col items-center justify-center py-2 px-1 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-[#2A2B30] text-slate-700 dark:text-slate-300 transition-colors">
+                        <span className="text-[9px] font-bold">最底</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 複製與刪除 */}
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-3">
+                      <button onClick={() => duplicateItem(selectedItem.id)} className="flex items-center justify-center gap-2 py-2.5 bg-white dark:bg-[#15151A] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-[#2A2B30] text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition-colors">
+                        <Icon name="copy" className="w-3.5 h-3.5" /> 複製
+                      </button>
+                      <button onClick={() => deleteItem(selectedItem.id)} className="flex items-center justify-center gap-2 py-2.5 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold transition-colors">
+                        <Icon name="trash2" className="w-3.5 h-3.5" /> 刪除
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 圖層清單 */}
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">圖層清單 (頂部至底部)</label>
+                    <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
+                      {reversedItems.map((item) => (
+                        <div 
+                          key={item.id}
+                          onClick={() => setSelectedId(item.id)}
+                          className={`flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer transition-colors ${selectedId === item.id ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-bold border border-indigo-200 dark:border-indigo-500/30' : 'hover:bg-slate-50 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-300 border border-transparent'}`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <div 
+                              className={`w-3.5 h-3.5 rounded-sm border ${item.color === 'transparent' ? 'border-dashed border-slate-400 bg-transparent' : 'border-slate-300'}`} 
+                              style={{ backgroundColor: item.color === 'transparent' ? 'transparent' : item.color }}
+                            ></div>
+                            <span className="truncate">{item.label || `物件 #${item.id}`}</span>
+                          </div>
+                          <span className="text-[9px] text-slate-400 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded shrink-0">
+                            {item.type === 'rect' ? '矩形' : '多邊形'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                 </div>
@@ -1233,6 +1507,32 @@
                     <Icon name="mousePointer2" className="w-5 h-5 text-slate-300 dark:text-slate-600" />
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">請在畫布上點選元件</p>
+                  
+                  {items.length > 0 && (
+                    <div className="w-full text-left mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">圖層快速選擇</label>
+                      <div className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+                        {reversedItems.map((item) => (
+                          <div 
+                            key={item.id}
+                            onClick={() => setSelectedId(item.id)}
+                            className="flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-300 transition-colors border border-transparent"
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <div 
+                                className={`w-3 h-3 rounded-sm border ${item.color === 'transparent' ? 'border-dashed border-slate-400' : 'border-slate-300'}`} 
+                                style={{ backgroundColor: item.color === 'transparent' ? 'transparent' : item.color }}
+                              ></div>
+                              <span className="truncate">{item.label || `物件 #${item.id}`}</span>
+                            </div>
+                            <span className="text-[9px] text-slate-400 px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded shrink-0">
+                              {item.type === 'rect' ? '矩形' : '多邊形'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1274,7 +1574,7 @@
       return (
         <div className="h-full flex flex-col animate-in fade-in print:p-0 transition-colors">
           
-          <div className="px-8 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#202024] flex justify-between items-center shrink-0 print:hidden text-slate-900 dark:text-white">
+          <div className="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#202024] flex flex-col sm:flex-row justify-between sm:items-center gap-3 shrink-0 print:hidden text-slate-900 dark:text-white">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <Icon name="fileText" className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -1283,21 +1583,21 @@
             </div>
             <button 
               onClick={() => window.print()}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 shadow-sm transition-colors text-sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-colors text-sm"
             >
               <Icon name="printer" className="w-4 h-4" /> 列印 / 存為 PDF
             </button>
           </div>
 
-          <div className="flex flex-1 min-h-0 print:block">
+          <div className="flex flex-col lg:flex-row flex-1 min-h-0 print:block">
             
-            {/* Form Input */}
-            <div className="w-[45%] lg:w-[40%] bg-white dark:bg-[#202024] border-r border-slate-200 dark:border-slate-800 overflow-y-auto print:hidden custom-scrollbar">
+            {/* Form Input Panel */}
+            <div className="w-full lg:w-[40%] bg-white dark:bg-[#202024] border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 overflow-y-auto print:hidden custom-scrollbar shrink-0">
               <div className="p-6 space-y-8">
                 <div className="space-y-4">
                   <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-2">1. 基本資訊</h4>
                   <InputGroup label="專案/活動名稱" name="projectName" value={report.projectName} onChange={handleChange} />
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <InputGroup label="場勘日期" name="surveyDate" type="date" value={report.surveyDate} onChange={handleChange} />
                     <InputGroup label="預定活動日期" name="eventDate" type="date" value={report.eventDate} onChange={handleChange} />
                   </div>
@@ -1310,7 +1610,7 @@
 
                 <div className="space-y-4">
                   <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-2">2. 空間與進撤場動線</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <InputGroup label="預估面積/坪數" name="areaSize" value={report.areaSize} onChange={handleChange} />
                     <InputGroup label="天花板淨高" name="ceilingHeight" value={report.ceilingHeight} onChange={handleChange} />
                   </div>
@@ -1343,28 +1643,28 @@
               </div>
             </div>
 
-            {/* Print Preview Area */}
-            <div className="flex-1 bg-slate-200/50 dark:bg-[#15151A] overflow-y-auto flex justify-center p-8 print:p-0 print:bg-white print:overflow-visible">
+            {/* Print Preview Area (支援手機端寬度自適應) */}
+            <div className="flex-1 bg-slate-200/50 dark:bg-[#15151A] overflow-y-auto flex justify-center p-4 sm:p-8 print:p-0 print:bg-white print:overflow-visible">
               
-              <div className="bg-white w-[210mm] min-h-[297mm] shadow-lg print:shadow-none p-12 print:p-0 text-slate-900 mx-auto font-sans">
+              <div className="bg-white w-full max-w-3xl lg:w-[210mm] min-h-[297mm] shadow-lg print:shadow-none p-6 sm:p-12 print:p-0 text-slate-900 mx-auto font-sans print-a4">
                 
-                <div className="border-b-2 border-slate-900 pb-4 mb-8 flex justify-between items-end">
+                <div className="border-b-2 border-slate-900 pb-4 mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between sm:items-end gap-2">
                   <div>
-                    <h1 className="text-2xl font-bold text-slate-900 mb-1">{report.projectName}</h1>
-                    <h2 className="text-lg font-semibold text-slate-500 tracking-wide">場地勘查檢核報告</h2>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1 leading-tight">{report.projectName}</h1>
+                    <h2 className="text-base sm:text-lg font-semibold text-slate-500 tracking-wide">場地勘查檢核報告</h2>
                   </div>
-                  <div className="text-right text-xs text-slate-500">
+                  <div className="text-left sm:text-right text-xs text-slate-500 shrink-0">
                     <p>勘查日期：{report.surveyDate}</p>
                     <p>列印日期：{new Date().toLocaleDateString()}</p>
                   </div>
                 </div>
 
-                <div className="mb-8 p-5 bg-slate-50 border border-slate-200 rounded-md">
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                <div className="mb-6 sm:mb-8 p-4 sm:p-5 bg-slate-50 border border-slate-200 rounded-md">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                     <InfoRow label="活動日期" value={report.eventDate} />
                     <InfoRow label="場地聯絡" value={report.contactInfo} />
                     <InfoRow label="場地名稱" value={report.venueName} />
-                    <div className="col-span-2">
+                    <div className="sm:col-span-2">
                       <InfoRow label="場地地址" value={report.venueAddress} />
                     </div>
                   </div>
@@ -1372,13 +1672,13 @@
 
                 <div className="grid grid-cols-1 gap-6">
                   <SectionBox title="空間與進撤場動線">
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-5 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 text-sm">
                       <DetailItem label="預估面積" value={report.areaSize} />
                       <DetailItem label="天花板淨高" value={report.ceilingHeight} />
                       <DetailItem label="最低障礙物" value={report.lowestPoint} />
                       <DetailItem label="動線最窄處" value={report.walkwayWidth} />
-                      <div className="col-span-2"><DetailItem label="卸貨區資訊" value={report.loadingDock} /></div>
-                      <div className="col-span-2"><DetailItem label="電梯尺寸限制" value={report.elevatorSize} /></div>
+                      <div className="sm:col-span-2"><DetailItem label="卸貨區資訊" value={report.loadingDock} /></div>
+                      <div className="sm:col-span-2"><DetailItem label="電梯尺寸限制" value={report.elevatorSize} /></div>
                     </div>
                   </SectionBox>
 
@@ -1386,7 +1686,7 @@
                     <div className="space-y-5 text-sm">
                       <DetailItem label="一般插座 (110V)" value={report.power110V} />
                       <DetailItem label="動力電箱 (220/380V)" value={report.power220V_380V} />
-                      <div className="grid grid-cols-2 gap-8">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                         <DetailItem label="現場燈光" value={report.lighting} />
                         <DetailItem label="網路狀況" value={report.network} />
                       </div>
@@ -1394,11 +1694,11 @@
                   </SectionBox>
 
                   <SectionBox title="場地規範與安全防護">
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-5 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 text-sm">
                       <DetailItem label="地板防護" value={report.floorMaterial} />
                       <DetailItem label="牆面黏貼" value={report.wallMaterial} />
-                      <div className="col-span-2"><DetailItem label="進撤場時間限制" value={report.timeRestriction} /></div>
-                      <div className="col-span-2"><DetailItem label="消防與逃生設施" value={report.fireSafety} /></div>
+                      <div className="sm:col-span-2"><DetailItem label="進撤場時間限制" value={report.timeRestriction} /></div>
+                      <div className="sm:col-span-2"><DetailItem label="消防與逃生設施" value={report.fireSafety} /></div>
                     </div>
                   </SectionBox>
 
@@ -1410,13 +1710,13 @@
                   </div>
                 </div>
 
-                <div className="mt-16 pt-8 flex justify-end gap-20 text-sm text-slate-600">
+                <div className="mt-12 sm:mt-16 pt-8 flex justify-end gap-10 sm:gap-20 text-sm text-slate-600">
                   <div className="text-center">
-                    <div className="w-32 border-b border-slate-400 mb-2 h-8"></div>
+                    <div className="w-24 sm:w-32 border-b border-slate-400 mb-2 h-8"></div>
                     <p>場勘人員簽名</p>
                   </div>
                   <div className="text-center">
-                    <div className="w-32 border-b border-slate-400 mb-2 h-8"></div>
+                    <div className="w-24 sm:w-32 border-b border-slate-400 mb-2 h-8"></div>
                     <p>場地方確認</p>
                   </div>
                 </div>
@@ -1455,8 +1755,8 @@
     function InfoRow({ label, value }) {
       return (
         <div className="flex border-b border-slate-200 pb-2">
-          <span className="text-slate-500 w-20 font-medium shrink-0">{label}</span>
-          <span className="text-slate-900 font-semibold">{value || '-'}</span>
+          <span className="text-slate-500 w-20 font-medium shrink-0 text-xs sm:text-sm">{label}</span>
+          <span className="text-slate-900 font-semibold text-xs sm:text-sm truncate">{value || '-'}</span>
         </div>
       );
     }
@@ -1465,7 +1765,7 @@
       return (
         <div className="flex flex-col gap-1.5">
           <span className="text-slate-500 font-bold text-[11px] uppercase tracking-wider">{label}</span>
-          <span className="text-slate-900 font-medium whitespace-pre-wrap">{value || '-'}</span>
+          <span className="text-slate-900 font-medium whitespace-pre-wrap text-xs sm:text-sm">{value || '-'}</span>
         </div>
       );
     }
@@ -1474,9 +1774,9 @@
       return (
         <div className="border border-slate-300 rounded-lg overflow-hidden">
           <div className="px-4 py-2 bg-slate-100 border-b border-slate-300">
-            <h3 className="font-bold text-slate-800 text-sm">{title}</h3>
+            <h3 className="font-bold text-slate-800 text-xs sm:text-sm">{title}</h3>
           </div>
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             {children}
           </div>
         </div>
