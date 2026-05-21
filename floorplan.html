@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>平面圖繪製 - EventScout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'Noto Sans TC', 'sans-serif'], } } } }
+  </script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+  </style>
+</head>
+<body class="bg-[#F6F8F9] dark:bg-[#15151A] text-slate-800 dark:text-slate-200 overflow-hidden transition-colors duration-300">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function Icon({ name, className = "w-4 h-4" }) {
+      const icons = {
+        home: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+        box: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>,
+        map: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" /><line x1="9" y1="3" x2="9" y2="18" /><line x1="15" y1="6" x2="15" y2="21" /></svg>,
+        fileText: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg>,
+        settings: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
+        sun: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>,
+        moon: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z" /></svg>,
+        menu: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>,
+        x: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+        download: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>,
+        rotateCcw: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><polyline points="3 3 3 8 8 8" /></svg>,
+        layoutGrid: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>,
+        penTool: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>,
+        copy: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>,
+        trash2: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>,
+        edit3: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>,
+        presentation: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="12" y1="17" x2="12" y2="21" /><line x1="10" y1="21" x2="14" y2="21" /></svg>,
+        mic: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v1a7 7 0 0 1-14 0v-1" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="8" y1="22" x2="16" y2="22" /></svg>,
+        sofa: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" /><path d="M2 9h20v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9z" /><path d="M4 16v4h2v-4" /><path d="M18 16v4h2v-4" /></svg>,
+        users: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
+        coffee: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z" /><line x1="6" y1="2" x2="6" y2="4" /><line x1="10" y1="2" x2="10" y2="4" /><line x1="14" y1="2" x2="14" y2="4" /></svg>,
+        clipboardList: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /><line x1="8" y1="11" x2="16" y2="11" /><line x1="8" y1="15" x2="13" y2="15" /></svg>,
+        store: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="22" x2="9" y2="9" /></svg>,
+        truck: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>,
+        table: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="16" height="18" rx="2" /><line x1="4" y1="9" x2="20" y2="9" /></svg>,
+        disc: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" /></svg>,
+        umbrella: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22V12m0 0V2a10 10 0 0 1 10 10h-10zm0 0H2A10 10 0 0 1 12 2" /></svg>,
+        panelTop: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /></svg>,
+        tent: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 22 22 22" /><line x1="12" y1="2" x2="12" y2="22" /><path d="m10 14 2-3 2 3" /></svg>,
+        rainbow: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 17a10 10 0 0 0-20 0" /><path d="M18 17a6 6 0 0 0-12 0" /><path d="M14 17a2 2 0 0 0-4 0" /></svg>,
+        droplets: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.09 3 12.25c0 2.22 1.8 4.05 4 4.05zM17 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S17.29 6.75 17 5.3c-.29 1.45-1.14 2.84-2.29 3.76S13 11.09 13 12.25c0 2.22 1.8 4.05 4 4.05z" /></svg>,
+        heartPulse: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /><path d="M3.22 12H7l2-5 3 10 1.5-7 1.5 4h3.78" /></svg>,
+        treePine: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m17 14 3-3-3-3h3L12 2 4 8h3L4 11l3 3H4l8 8 8-8z" /><line x1="12" y1="18" x2="12" y2="22" /></svg>,
+        mousePointer2: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z" /></svg>
+      };
+      return icons[name] || null;
+    }
+
+    function AppLayout({ activePage, children }) {
+      const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+      const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+      useEffect(() => {
+        if (theme === 'dark') document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', theme);
+      }, [theme]);
+
+      const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+
+      return (
+        <div className="flex h-screen bg-[#F6F8F9] dark:bg-[#15151A] text-slate-800 dark:text-slate-200 overflow-hidden transition-colors duration-300">
+          <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#202024] border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shrink-0 z-20 print:hidden transition-colors duration-300">
+            <button onClick={() => setIsSidebarOpen(true)} className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-400">
+              <Icon name="menu" className="w-6 h-6" />
+            </button>
+            <span className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <div className="w-5 h-5 rounded bg-indigo-600 flex items-center justify-center"><Icon name="settings" className="w-3 h-3 text-white" /></div>
+              EventScout
+            </span>
+            <button onClick={toggleTheme} className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-400">
+              {theme === 'light' ? <Icon name="moon" className="w-5 h-5" /> : <Icon name="sun" className="w-5 h-5" />}
+            </button>
+          </header>
+
+          {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30 transition-opacity duration-300" />}
+
+          <aside className={`fixed lg:relative inset-y-0 left-0 w-64 bg-white dark:bg-[#202024] border-r border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 z-40 transition-transform duration-300 print:hidden lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div className="p-6 flex items-center justify-between">
+              <h1 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center"><Icon name="settings" className="w-4 h-4 text-white" /></div>
+                EventScout
+              </h1>
+              <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-400">
+                <Icon name="x" className="w-5 h-5" />
+              </button>
+            </div>
+            <nav className="flex-1 px-3 space-y-1 mt-2">
+              <NavItem href="index.html" icon={<Icon name="home" />} label="首頁介紹" isActive={activePage === 'home'} />
+              <div className="pt-4 pb-2 px-3 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">工作區</div>
+              <NavItem href="truss.html" icon={<Icon name="box" />} label="Truss 架構圖" isActive={activePage === 'truss'} />
+              <NavItem href="floorplan.html" icon={<Icon name="map" />} label="平面圖繪製" isActive={activePage === 'floorplan'} />
+              <NavItem href="report.html" icon={<Icon name="fileText" />} label="場勘報告匯出" isActive={activePage === 'report'} />
+            </nav>
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800/50">
+              <button onClick={toggleTheme} className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2B30] transition-colors">
+                <span className="font-medium flex items-center gap-2">{theme === 'light' ? <Icon name="moon" /> : <Icon name="sun" />}{theme === 'light' ? '切換深色模式' : '切換淺色模式'}</span>
+              </button>
+              <div className="text-[10px] text-slate-400 dark:text-slate-600 text-center mt-4">&copy; 2026 Event Planner Tool</div>
+            </div>
+          </aside>
+
+          <main className="flex-1 overflow-y-auto relative pt-14 lg:pt-0 print:pt-0 print:w-full print:absolute print:inset-0 bg-[#F6F8F9] dark:bg-[#15151A] transition-colors duration-300">
+            {children}
+          </main>
+        </div>
+      );
+    }
+
+    function NavItem({ icon, label, isActive, href }) {
+      return (
+        <a href={href} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm ${isActive ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2B30] hover:text-slate-900 dark:hover:text-slate-200 font-medium'}`}>
+          {icon}<span>{label}</span>
+        </a>
+      );
+    }
+
+    function FloorPlanApp() {
+      const canvasRef = useRef(null);
+      const [leftTab, setLeftTab] = useState('library'); 
+      const [mobileSubTab, setMobileSubTab] = useState('canvas'); 
+      
+      const [items, setItems] = useState([
+        { id: 1, type: 'rect', cx: 400, cy: 160, w: 200, h: 80, label: '主舞台', color: '#fef3c7', rotation: 0, scale: 1 },
+        { id: 2, type: 'rect', cx: 400, cy: 380, w: 100, h: 40, label: '控台 (PA)', color: '#e0f2fe', rotation: 0, scale: 1 }
+      ]);
+      const [selectedId, setSelectedId] = useState(null);
+      const [draggingId, setDraggingId] = useState(null);
+      
+      const [mode, setMode] = useState('select'); 
+      const [polygonPoints, setPolygonPoints] = useState([]);
+      const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+      const lastMouseRef = useRef({ x: 0, y: 0 });
+
+      const libraryCategories = [
+        { name: '會議論壇', items: [{ label: '演講舞台', w: 180, h: 60, icon: <Icon name="presentation" className="w-5 h-5 text-amber-500 mb-1" />, color: '#fef3c7' }, { label: '水晶講桌', w: 40, h: 40, icon: <Icon name="mic" className="w-5 h-5 text-slate-500 mb-1" />, color: '#f3f4f6' }, { label: '貴賓沙發', w: 100, h: 40, icon: <Icon name="sofa" className="w-5 h-5 text-emerald-500 mb-1" />, color: '#d1fae5' }, { label: '觀眾排椅', w: 120, h: 80, icon: <Icon name="users" className="w-5 h-5 text-blue-500 mb-1" />, color: '#dbeafe' }] },
+        { name: '市集展攤', items: [{ label: '標準攤位', w: 90, h: 90, icon: <Icon name="store" className="w-5 h-5 text-green-600 mb-1" />, color: '#bbf7d0' }, { label: '造型餐車', w: 120, h: 60, icon: <Icon name="truck" className="w-5 h-5 text-amber-600 mb-1" />, color: '#fde68a' }, { label: '陳列長桌', w: 120, h: 40, icon: <Icon name="table" className="w-5 h-5 text-orange-700 mb-1" />, color: '#fed7aa' }, { label: '大遮陽傘', w: 80, h: 80, icon: <Icon name="umbrella" className="w-5 h-5 text-sky-500 mb-1" />, color: '#bae6fd' }] },
+        { name: '戶外與安全', items: [{ label: '活動帳篷', w: 100, h: 100, icon: <Icon name="tent" className="w-5 h-5 text-amber-700 mb-1" />, color: '#fed7aa' }, { label: '充氣拱門', w: 160, h: 30, icon: <Icon name="rainbow" className="w-5 h-5 text-pink-500 mb-1" />, color: '#fbcfe8' }, { label: '流動廁所', w: 60, h: 60, icon: <Icon name="droplets" className="w-5 h-5 text-blue-500 mb-1" />, color: '#e0f2fe' }, { label: '醫護站', w: 90, h: 60, icon: <Icon name="heartPulse" className="w-5 h-5 text-red-500 mb-1" />, color: '#fecaca' }] }
+      ];
+
+      const getMousePos = (canvas, evt) => {
+        const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
+        return { x: (evt.clientX - rect.left) * scaleX, y: (evt.clientY - rect.top) * scaleY };
+      };
+
+      const getTouchPos = (canvas, evt) => {
+        if (!evt.touches || evt.touches.length === 0) return { x: 0, y: 0 };
+        const touch = evt.touches[0]; const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
+        return { x: (touch.clientX - rect.left) * scaleX, y: (touch.clientY - rect.top) * scaleY };
+      };
+
+      const isPointInRotatedRect = (pos, item) => {
+        const dx = pos.x - item.cx; const dy = pos.y - item.cy; const rad = -(item.rotation || 0) * Math.PI / 180;
+        const rx = dx * Math.cos(rad) - dy * Math.sin(rad); const ry = dx * Math.sin(rad) + dy * Math.cos(rad);
+        const actualW = item.w * (item.scale || 1); const actualH = item.h * (item.scale || 1);
+        return Math.abs(rx) <= actualW / 2 && Math.abs(ry) <= actualH / 2;
+      };
+
+      const isPointInPolygon = (point, vs) => {
+        let x = point.x, y = point.y; let inside = false;
+        for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+          let xi = vs[i].x, yi = vs[i].y; let xj = vs[j].x, yj = vs[j].y;
+          let intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+          if (intersect) inside = !inside;
+        } return inside;
+      };
+
+      const handleCanvasStart = (pos) => {
+        if (mode === 'draw_polygon') {
+          if (polygonPoints.length > 2) {
+            const firstPt = polygonPoints[0]; const dist = Math.sqrt(Math.pow(pos.x - firstPt.x, 2) + Math.pow(pos.y - firstPt.y, 2));
+            if (dist < 20) { finishPolygon(); return; }
+          }
+          setPolygonPoints([...polygonPoints, pos]); return;
+        }
+        let hitId = null;
+        for (let i = items.length - 1; i >= 0; i--) {
+          const item = items[i];
+          if (item.type === 'rect') { if (isPointInRotatedRect(pos, item)) { hitId = item.id; break; } } 
+          else if (item.type === 'polygon') { if (isPointInPolygon(pos, item.points)) { hitId = item.id; break; } }
+        }
+        setSelectedId(hitId);
+        if (hitId) { setDraggingId(hitId); lastMouseRef.current = pos; }
+      };
+
+      const handleCanvasMove = (pos) => {
+        setMousePos(pos);
+        if (draggingId) {
+          const dx = pos.x - lastMouseRef.current.x; const dy = pos.y - lastMouseRef.current.y; lastMouseRef.current = pos;
+          setItems(items.map(item => {
+            if (item.id === draggingId) {
+              if (item.type === 'rect') return { ...item, cx: item.cx + dx, cy: item.cy + dy };
+              else if (item.type === 'polygon') return { ...item, points: item.points.map(p => ({ x: p.x + dx, y: p.y + dy })) };
+            }
+            return item;
+          }));
+        }
+      };
+
+      const handleCanvasEnd = () => { setDraggingId(null); };
+      const handleDoubleClick = () => { if (mode === 'draw_polygon' && polygonPoints.length >= 3) finishPolygon(); };
+
+      const finishPolygon = () => {
+        if (polygonPoints.length < 3) { setPolygonPoints([]); setMode('select'); return; }
+        const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
+        setItems([...items, { id: newId, type: 'polygon', points: polygonPoints, label: '不規則區域', color: '#fef3c7' }]);
+        setPolygonPoints([]); setMode('select'); setMobileSubTab('canvas');
+      };
+
+      const addLibraryItem = (libItem) => {
+        const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
+        setItems([...items, { id: newId, type: 'rect', cx: 400, cy: 300, w: libItem.w, h: libItem.h, label: libItem.label, color: libItem.color, rotation: 0, scale: 1 }]);
+        setSelectedId(newId); setMode('select'); setMobileSubTab('canvas');
+      };
+
+      const updateItem = (id, field, value) => { setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item)); };
+      const deleteItem = (id) => { setItems(items.filter(item => item.id !== id)); if (selectedId === id) setSelectedId(null); };
+
+      const duplicateItem = (id) => {
+        const itemToCopy = items.find(i => i.id === id);
+        if (itemToCopy) {
+          const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
+          let newItem = { ...itemToCopy, id: newId, label: itemToCopy.label + ' (複製)' };
+          if (newItem.type === 'rect') { newItem.cx += 20; newItem.cy += 20; } else if (newItem.type === 'polygon') { newItem.points = newItem.points.map(p => ({ x: p.x + 20, y: p.y + 20 })); }
+          setItems([...items, newItem]); setSelectedId(newId);
+        }
+      };
+
+      const moveLayer = (id, action) => {
+        setItems(prev => {
+          const index = prev.findIndex(item => item.id === id);
+          if (index === -1) return prev;
+          const newItems = [...prev];
+          if (action === 'front' && index < prev.length - 1) { const [item] = newItems.splice(index, 1); newItems.push(item); }
+          else if (action === 'back' && index > 0) { const [item] = newItems.splice(index, 1); newItems.unshift(item); }
+          else if (action === 'up' && index < prev.length - 1) { const temp = newItems[index]; newItems[index] = newItems[index + 1]; newItems[index + 1] = temp; }
+          else if (action === 'down' && index > 0) { const temp = newItems[index]; newItems[index] = newItems[index - 1]; newItems[index - 1] = temp; }
+          return newItems;
+        });
+      };
+
+      const clearCanvas = () => { if(window.confirm('確定要清空畫布重新繪製嗎？')) { setItems([]); setSelectedId(null); setPolygonPoints([]); } };
+
+      const getPolygonCentroid = (pts) => {
+        let first = pts[0], last = pts[pts.length - 1]; if (first.x !== last.x || first.y !== last.y) pts = [...pts, first];
+        let twicearea = 0, x = 0, y = 0, nPts = pts.length, p1, p2, f;
+        for (let i = 0, j = nPts - 1; i < nPts; j = i++) {
+          p1 = pts[i]; p2 = pts[j]; f = p1.x * p2.y - p2.x * p1.y; twicearea += f; x += (p1.x + p2.x) * f; y += (p1.y + p2.y) * f;
+        }
+        f = twicearea * 3; return { x: x / f, y: y / f };
+      };
+
+      useEffect(() => {
+        const canvas = canvasRef.current; if (!canvas) return; const ctx = canvas.getContext('2d');
+        const width = 800; const height = 600; canvas.width = width; canvas.height = height;
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 1;
+        for(let x=0; x<=width; x+=20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); }
+        for(let y=0; y<=height; y+=20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); }
+
+        items.forEach(item => {
+          ctx.save();
+          const isSelected = item.id === selectedId;
+          ctx.strokeStyle = isSelected ? '#4f46e5' : '#64748b'; ctx.lineWidth = isSelected ? 2.5 : 1.2;
+          if (isSelected) { ctx.shadowColor = 'rgba(79, 70, 229, 0.4)'; ctx.shadowBlur = 6; }
+
+          if (item.type === 'rect') {
+            const actualW = item.w * (item.scale || 1); const actualH = item.h * (item.scale || 1);
+            ctx.translate(item.cx, item.cy); ctx.rotate((item.rotation || 0) * Math.PI / 180); ctx.beginPath();
+            ctx.roundRect(-actualW / 2, -actualH / 2, actualW, actualH, 4);
+            if (item.color !== 'transparent') { ctx.fillStyle = item.color; ctx.fill(); } else if (isSelected) { ctx.fillStyle = 'rgba(79, 70, 229, 0.05)'; ctx.fill(); }
+            ctx.stroke(); ctx.fillStyle = '#1e293b'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.shadowColor = 'transparent';
+            ctx.fillText(item.label, 0, 0);
+          } else if (item.type === 'polygon') {
+            ctx.beginPath();
+            item.points.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+            ctx.closePath();
+            if (item.color !== 'transparent') { ctx.fillStyle = item.color; ctx.fill(); } else if (isSelected) { ctx.fillStyle = 'rgba(79, 70, 229, 0.05)'; ctx.fill(); }
+            ctx.stroke(); const centroid = getPolygonCentroid(item.points); ctx.fillStyle = '#1e293b'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.shadowColor = 'transparent'; ctx.fillText(item.label, centroid.x, centroid.y);
+          }
+          ctx.restore();
+        });
+
+        if (mode === 'draw_polygon' && polygonPoints.length > 0) {
+          ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.beginPath();
+          polygonPoints.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); ctx.fillStyle = '#4f46e5'; ctx.fillRect(p.x - 3, p.y - 3, 6, 6); });
+          ctx.lineTo(mousePos.x, mousePos.y); ctx.stroke(); ctx.setLineDash([]); 
+          if (polygonPoints.length > 2) { ctx.beginPath(); ctx.arc(polygonPoints[0].x, polygonPoints[0].y, 5, 0, Math.PI*2); ctx.fillStyle = 'rgba(79, 70, 229, 0.5)'; ctx.fill(); }
+        }
+      }, [items, selectedId, mode, polygonPoints, mousePos]);
+
+      const selectedItem = items.find(i => i.id === selectedId);
+      const reversedItems = [...items].reverse();
+
+      return (
+        <div className="h-full flex flex-col animate-in fade-in transition-colors">
+          <div className="px-6 sm:px-8 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#202024] flex flex-col sm:flex-row justify-between sm:items-center gap-3 shrink-0">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><Icon name="map" className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> 平面圖繪製與自訂編輯</h2>
+            <div className="flex gap-2 sm:gap-3">
+              <button onClick={clearCanvas} className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#2A2B30] px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors border border-slate-200 dark:border-slate-700">
+                <Icon name="rotateCcw" /> 重設畫布
+              </button>
+              <button onClick={() => { const link = document.createElement('a'); link.download = 'floor_plan.png'; link.href = canvasRef.current.toDataURL(); link.click(); }} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors">
+                <Icon name="download" /> 匯出圖面
+              </button>
+            </div>
+          </div>
+
+          <div className="lg:hidden bg-white dark:bg-[#202024] border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex gap-1 shrink-0">
+            <button onClick={() => setMobileSubTab('library')} className={`flex-1 py-2 rounded-md text-xs font-bold text-center border transition-all ${mobileSubTab === 'library' ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200' : 'border-transparent text-slate-500'}`}>元件圖庫</button>
+            <button onClick={() => setMobileSubTab('canvas')} className={`flex-1 py-2 rounded-md text-xs font-bold text-center border transition-all ${mobileSubTab === 'canvas' ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200' : 'border-transparent text-slate-500'}`}>編輯畫布</button>
+            <button onClick={() => setMobileSubTab('settings')} className={`flex-1 py-2 rounded-md text-xs font-bold text-center border transition-all ${mobileSubTab === 'settings' ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200' : 'border-transparent text-slate-500'}`}>屬性圖層</button>
+          </div>
+
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            <div className={`w-full lg:w-[260px] bg-white dark:bg-[#202024] border-r border-slate-200 dark:border-slate-800 flex-col shrink-0 z-10 ${mobileSubTab === 'library' ? 'flex' : 'hidden lg:flex'}`}>
+              <div className="flex border-b border-slate-200 dark:border-slate-800">
+                <button onClick={() => setLeftTab('library')} className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-1 border-b-2 transition-colors ${leftTab === 'library' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500'}`}><Icon name="layoutGrid" /> 活動元件</button>
+                <button onClick={() => setLeftTab('custom')} className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-1 border-b-2 transition-colors ${leftTab === 'custom' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500'}`}><Icon name="penTool" /> 自訂繪圖</button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                {leftTab === 'library' ? (
+                  <div className="space-y-6">
+                    {libraryCategories.map(cat => (
+                      <div key={cat.name}>
+                        <h3 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">{cat.name}</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          {cat.items.map(libItem => (
+                            <button key={libItem.label} onClick={() => addLibraryItem(libItem)} className="flex flex-col items-center justify-center p-3 bg-white dark:bg-[#15151A] border border-slate-200 dark:border-slate-700 rounded-lg hover:border-indigo-400 group transition-colors">
+                              <div className="group-hover:scale-110 transition-transform">{libItem.icon}</div>
+                              <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 mt-1">{libItem.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg border border-indigo-100">
+                      <h4 className="font-bold text-indigo-800 dark:text-indigo-300 text-sm mb-2 flex items-center gap-2"><Icon name="edit3" /> 繪製不規則邊界</h4>
+                      <p className="text-xs text-indigo-600/80 mb-3 leading-relaxed">點擊畫布定點，雙擊滑鼠完成閉合。</p>
+                      <div className="flex gap-2">
+                        <button onClick={() => setMode('select')} className={`flex-1 py-1.5 rounded-md text-xs font-bold border transition-all ${mode === 'select' ? 'bg-white border-indigo-300 text-indigo-700' : 'border-transparent text-slate-500'}`}>選取模式</button>
+                        <button onClick={() => { setMode('draw_polygon'); setSelectedId(null); }} className={`flex-1 py-1.5 rounded-md text-xs font-bold border transition-all ${mode === 'draw_polygon' ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white text-slate-600'}`}>開始繪製</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={`flex-1 relative items-center justify-center p-4 bg-[#F6F8F9] dark:bg-[#15151A] overflow-auto ${mobileSubTab === 'canvas' ? 'flex' : 'hidden lg:flex'}`}>
+              {mode === 'draw_polygon' && (<div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md z-10 pointer-events-none">正在繪製多邊形：點擊定點，雙擊閉合</div>)}
+              <div className="relative shadow-md border border-slate-200 dark:border-slate-800 bg-white">
+                <canvas 
+                  ref={canvasRef}
+                  onMouseDown={(e) => handleCanvasStart(getMousePos(canvasRef.current, e))}
+                  onMouseMove={(e) => handleCanvasMove(getMousePos(canvasRef.current, e))}
+                  onMouseUp={handleCanvasEnd} onMouseLeave={handleCanvasEnd} onDoubleClick={handleDoubleClick}
+                  onTouchStart={(e) => { e.preventDefault(); handleCanvasStart(getTouchPos(canvasRef.current, e)); }}
+                  onTouchMove={(e) => { e.preventDefault(); handleCanvasMove(getTouchPos(canvasRef.current, e)); }}
+                  onTouchEnd={(e) => { e.preventDefault(); handleCanvasEnd(); }}
+                  className={`${mode === 'draw_polygon' ? 'cursor-crosshair' : (draggingId ? 'cursor-grabbing' : 'cursor-pointer')} max-w-full max-h-full object-contain block`}
+                ></canvas>
+              </div>
+            </div>
+
+            <div className={`w-full lg:w-[280px] bg-white dark:bg-[#202024] border-l border-slate-200 dark:border-slate-800 flex-col shrink-0 z-10 overflow-y-auto custom-scrollbar ${mobileSubTab === 'settings' ? 'flex' : 'hidden lg:flex'}`}>
+              <div className="p-4 border-b border-slate-100 dark:border-slate-800/50">
+                <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2"><Icon name="settings" className="text-slate-400" /> 元件屬性設定</h3>
+              </div>
+              {selectedItem ? (
+                <div className="p-5 space-y-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">自訂名稱</label>
+                    <input type="text" value={selectedItem.label} onChange={(e) => updateItem(selectedItem.id, 'label', e.target.value)} className="w-full bg-white dark:bg-[#15151A] border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm outline-none text-slate-900 dark:text-slate-100" />
+                  </div>
+                  {selectedItem.type === 'rect' && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block mb-1">寬度(W)</span>
+                          <input type="number" value={selectedItem.w} onChange={(e) => updateItem(selectedItem.id, 'w', Number(e.target.value))} className="w-full bg-white dark:bg-[#15151A] border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm text-center outline-none text-slate-900 dark:text-slate-100" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block mb-1">高度(H)</span>
+                          <input type="number" value={selectedItem.h} onChange={(e) => updateItem(selectedItem.id, 'h', Number(e.target.value))} className="w-full bg-white dark:bg-[#15151A] border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm text-center outline-none text-slate-900 dark:text-slate-100" />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-xs font-bold text-slate-600 dark:text-slate-400">旋轉角度</label>
+                          <span className="text-xs font-bold text-indigo-600">{selectedItem.rotation || 0}°</span>
+                        </div>
+                        <input type="range" min="-180" max="180" step="5" value={selectedItem.rotation || 0} onChange={(e) => updateItem(selectedItem.id, 'rotation', Number(e.target.value))} className="w-full accent-indigo-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer" />
+                      </div>
+                    </>
+                  )}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-3">視覺顏色</label>
+                    <div className="flex flex-wrap gap-2">
+                      {['#fef3c7', '#fee2e2', '#e0f2fe', '#d1fae5', '#f3e8ff', '#f1f5f9'].map(c => (
+                        <button key={c} onClick={() => updateItem(selectedItem.id, 'color', c)} className={`w-7 h-7 rounded-md shadow-sm transition-transform ${selectedItem.color === c ? 'ring-2 ring-indigo-500 scale-110' : 'border border-slate-200'}`} style={{ backgroundColor: c }} />
+                      ))}
+                      <button onClick={() => updateItem(selectedItem.id, 'color', 'transparent')} className={`w-7 h-7 rounded-md border-2 border-dashed border-slate-400 relative bg-transparent transition-transform ${selectedItem.color === 'transparent' ? 'ring-2 ring-indigo-500 scale-110' : ''}`}><div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-0.5 bg-red-400/80 rotate-45"></div></div></button>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">圖層順序</label>
+                    <div className="grid grid-cols-4 gap-1">
+                      <button onClick={() => moveLayer(selectedItem.id, 'front')} className="flex flex-col items-center py-2 px-1 border border-slate-200 rounded-lg hover:bg-slate-50"><span className="text-[9px] font-bold">最頂</span></button>
+                      <button onClick={() => moveLayer(selectedItem.id, 'up')} className="flex flex-col items-center py-2 px-1 border border-slate-200 rounded-lg hover:bg-slate-50"><span className="text-[9px] font-bold">上移</span></button>
+                      <button onClick={() => moveLayer(selectedItem.id, 'down')} className="flex flex-col items-center py-2 px-1 border border-slate-200 rounded-lg hover:bg-slate-50"><span className="text-[9px] font-bold">下移</span></button>
+                      <button onClick={() => moveLayer(selectedItem.id, 'back')} className="flex flex-col items-center py-2 px-1 border border-slate-200 rounded-lg hover:bg-slate-50"><span className="text-[9px] font-bold">最底</span></button>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-3">
+                      <button onClick={() => duplicateItem(selectedItem.id)} className="flex items-center justify-center gap-2 py-2.5 bg-white border border-slate-300 rounded-lg text-xs font-bold"><Icon name="copy" /> 複製</button>
+                      <button onClick={() => deleteItem(selectedItem.id)} className="flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold"><Icon name="trash2" /> 刪除</button>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">圖層清單</label>
+                    <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
+                      {reversedItems.map((item) => (
+                        <div key={item.id} onClick={() => setSelectedId(item.id)} className={`flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer ${selectedId === item.id ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200' : 'hover:bg-slate-50 border border-transparent'}`}>
+                          <div className="flex items-center gap-2 truncate"><div className={`w-3.5 h-3.5 rounded-sm border ${item.color === 'transparent' ? 'border-dashed' : ''}`} style={{ backgroundColor: item.color === 'transparent' ? 'transparent' : item.color }}></div><span className="truncate">{item.label}</span></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-[#15151A] flex items-center justify-center mb-3"><Icon name="mousePointer2" className="text-slate-400" /></div>
+                  <p className="text-sm text-slate-500 font-medium">請在畫布上點選元件</p>
+                  {items.length > 0 && (
+                    <div className="w-full text-left mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                      <label className="block text-xs font-bold text-slate-600 mb-2">圖層快速選擇</label>
+                      <div className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+                        {reversedItems.map((item) => (
+                          <div key={item.id} onClick={() => setSelectedId(item.id)} className="flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer hover:bg-slate-50">
+                            <span className="truncate">{item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<AppLayout activePage="floorplan"><FloorPlanApp /></AppLayout>);
+  </script>
+</body>
+</html>
