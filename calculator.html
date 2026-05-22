@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>專業尺寸換算機 - EventScout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'Noto Sans TC', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] } } } }
+  </script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body { -webkit-tap-highlight-color: transparent; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+    /* 計算機數位字體發光效果 */
+    .digital-display {
+      text-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-[#F6F8F9] dark:bg-[#15151A] text-slate-800 dark:text-slate-200 overflow-hidden transition-colors duration-300">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function Icon({ name, className = "w-4 h-4" }) {
+      const icons = {
+        home: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+        box: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>,
+        map: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" /><line x1="9" y1="3" x2="9" y2="18" /><line x1="15" y1="6" x2="15" y2="21" /></svg>,
+        fileText: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg>,
+        book: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>,
+        calculator: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>,
+        settings: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
+        sun: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>,
+        moon: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z" /></svg>,
+        menu: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>,
+        x: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+        monitor: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>,
+        projector: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 7h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"></path><circle cx="9" cy="12" r="2"></circle><line x1="15" y1="11" x2="17" y2="11"></line><line x1="15" y1="13" x2="17" y2="13"></line></svg>,
+        printer: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>,
+        users: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>,
+        lightbulb: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .34 2.02 1.5 3.5.76.75 1.23 1.51 1.41 2.5" /></svg>
+      };
+      return icons[name] || null;
+    }
+
+    function AppLayout({ activePage, children, theme, toggleTheme }) {
+      const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+      return (
+        <div className="flex h-screen bg-[#F6F8F9] dark:bg-[#15151A] text-slate-800 dark:text-slate-200 overflow-hidden transition-colors duration-300">
+          <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#202024] border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shrink-0 z-40 transition-colors duration-300">
+            <button onClick={() => setIsSidebarOpen(true)} className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-400">
+              <Icon name="menu" className="w-6 h-6" />
+            </button>
+            <a href="index.html" className="font-bold text-slate-900 dark:text-white flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <div className="w-5 h-5 rounded bg-indigo-600 flex items-center justify-center"><Icon name="settings" className="w-3 h-3 text-white" /></div>
+              EventScout
+            </a>
+            <button onClick={toggleTheme} className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-400">
+              {theme === 'light' ? <Icon name="moon" className="w-5 h-5" /> : <Icon name="sun" className="w-5 h-5" />}
+            </button>
+          </header>
+
+          {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-40 transition-opacity duration-300" />}
+
+          <aside className={`fixed lg:relative inset-y-0 left-0 w-64 bg-white dark:bg-[#202024] border-r border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 z-50 transition-transform duration-300 print:hidden lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div className="p-6 flex items-center justify-between">
+              <a href="index.html" className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white hover:opacity-80 transition-opacity">
+                <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center"><Icon name="settings" className="w-4 h-4 text-white" /></div>
+                EventScout
+              </a>
+              <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-[#2A2B30] text-slate-600 dark:text-slate-400">
+                <Icon name="x" className="w-5 h-5" />
+              </button>
+            </div>
+            <nav className="flex-1 px-3 space-y-1 mt-2 custom-scrollbar overflow-y-auto">
+              <NavItem href="index.html" icon={<Icon name="home" />} label="首頁介紹" isActive={activePage === 'home'} />
+              <NavItem href="knowledge.html" icon={<Icon name="book" />} label="場勘專業知識庫" isActive={activePage === 'knowledge'} />
+              <div className="pt-4 pb-2 px-3 text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">工作區工具</div>
+              <NavItem href="calculator.html" icon={<Icon name="calculator" />} label="專業尺寸與空間換算" isActive={activePage === 'calculator'} />
+              <NavItem href="truss.html" icon={<Icon name="box" />} label="Truss 架構圖" isActive={activePage === 'truss'} />
+              <NavItem href="floorplan.html" icon={<Icon name="map" />} label="平面圖繪製" isActive={activePage === 'floorplan'} />
+              <NavItem href="report.html" icon={<Icon name="fileText" />} label="場勘報告匯出" isActive={activePage === 'report'} />
+            </nav>
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800/50">
+              <button onClick={toggleTheme} className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2B30] transition-colors">
+                <span className="font-medium flex items-center gap-2">
+                  {theme === 'light' ? <Icon name="moon" /> : <Icon name="sun" />}
+                  {theme === 'light' ? '切換深色模式' : '切換淺色模式'}
+                </span>
+              </button>
+            </div>
+          </aside>
+
+          <main className="flex-1 flex flex-col relative pt-14 lg:pt-0 print:pt-0 print:w-full print:absolute print:inset-0 bg-[#F6F8F9] dark:bg-[#15151A] transition-colors duration-300">
+            {children}
+          </main>
+        </div>
+      );
+    }
+
+    function NavItem({ icon, label, isActive, href }) {
+      return (
+        <a href={href} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm ${isActive ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2A2B30] hover:text-slate-900 dark:hover:text-slate-200 font-medium'}`}>
+          {icon}<span>{label}</span>
+        </a>
+      );
+    }
+
+    // --- 換算機工具組件 ---
+
+    // 1. LED 螢幕換算器
+    function LEDCalculator() {
+      const [width, setWidth] = useState(8);
+      const [height, setHeight] = useState(4);
+      const [pitch, setPitch] = useState(2.5);
+
+      const resW = Math.round((width * 1000) / pitch);
+      const resH = Math.round((height * 1000) / pitch);
+      const totalPixels = resW * resH;
+      const aspect = (resW / resH).toFixed(2);
+
+      return (
+        <div className="space-y-6">
+          <div className="bg-[#111] dark:bg-[#000] p-6 rounded-2xl border-4 border-slate-300 dark:border-slate-800 shadow-inner text-emerald-400 font-mono flex flex-col gap-2">
+            <div className="text-sm text-slate-400 font-bold uppercase tracking-widest flex justify-between">
+              <span>LED Resolution (W x H)</span>
+              <span>P{pitch}</span>
+            </div>
+            <div className="text-4xl sm:text-5xl font-bold tracking-tight digital-display truncate my-1">
+              {resW} <span className="text-slate-500 text-3xl">x</span> {resH} <span className="text-xl text-emerald-600">px</span>
+            </div>
+            <div className="text-sm font-medium text-emerald-500 mt-2 pt-3 border-t border-emerald-900/40 flex justify-between">
+              <span>總畫素: {(totalPixels / 10000).toFixed(1)} 萬</span>
+              <span>比例: {aspect}:1</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-[#202024] p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">螢幕總寬度 (公尺)</label>
+              <div className="flex items-center gap-2">
+                <input type="number" step="0.5" value={width} onChange={e=>setWidth(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-[#15151A] text-lg font-bold p-2.5 rounded outline-none border focus:border-indigo-500 dark:border-slate-600" />
+              </div>
+            </div>
+            <div className="bg-white dark:bg-[#202024] p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">螢幕總高度 (公尺)</label>
+              <div className="flex items-center gap-2">
+                <input type="number" step="0.5" value={height} onChange={e=>setHeight(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-[#15151A] text-lg font-bold p-2.5 rounded outline-none border focus:border-indigo-500 dark:border-slate-600" />
+              </div>
+            </div>
+            <div className="bg-white dark:bg-[#202024] p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">像素間距 (P數 mm)</label>
+              <select value={pitch} onChange={e=>setPitch(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-[#15151A] text-base font-bold p-2.5 rounded outline-none border focus:border-indigo-500 dark:border-slate-600 cursor-pointer">
+                <option value="1.5">P1.5 (室內極細)</option>
+                <option value="2.0">P2.0 (室內高階)</option>
+                <option value="2.5">P2.5 (室內標準)</option>
+                <option value="3.0">P3.0 (室內/戶外)</option>
+                <option value="4.0">P4.0 (戶外標準)</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="bg-emerald-50 dark:bg-emerald-900/10 border-l-4 border-emerald-500 p-4 rounded-r-lg">
+            <h4 className="flex items-center gap-2 text-sm font-bold text-emerald-800 dark:text-emerald-400 mb-1">
+              <Icon name="lightbulb" className="w-4 h-4" /> 場勘為什麼需要算這個？
+            </h4>
+            <p className="text-sm text-emerald-700 dark:text-emerald-500/80 leading-relaxed">
+              掌握 LED 螢幕的總畫素。一方面讓視覺設計師有精確的製稿比例與解析度（避免畫面被強制拉伸變形），另一方面確保現場配置的發送卡與網路線數量足以負荷（單卡負載約 65 萬像素，此尺寸約需 <strong>{Math.ceil(totalPixels / 650000)}</strong> 條訊號線）。
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // 2. 投影機與布幕換算器
+    function ProjectionCalculator() {
+      const [inch, setInch] = useState(150);
+      const [ratio, setRatio] = useState('16:9');
+
+      // 計算實體長寬 (1吋 = 2.54cm)
+      const diagMeters = (inch * 2.54) / 100;
+      let wMeters = 0, hMeters = 0;
+      let recommendedPixel = "";
+      
+      if (ratio === '16:9') {
+        wMeters = diagMeters * 0.8716;
+        hMeters = diagMeters * 0.4903;
+        recommendedPixel = inch >= 150 ? "3840 x 2160 (4K UHD)" : "1920 x 1080 (FHD)";
+      } else {
+        wMeters = diagMeters * 0.8;
+        hMeters = diagMeters * 0.6;
+        recommendedPixel = inch >= 150 ? "1600 x 1200 (UXGA)" : "1024 x 768 (XGA)";
+      }
+
+      // 預估投影距離 (短焦 0.8, 標準 1.5, 長焦 2.0)
+      const distShort = (wMeters * 0.8).toFixed(1);
+      const distStd = (wMeters * 1.5).toFixed(1);
+      const distLong = (wMeters * 2.0).toFixed(1);
+
+      return (
+        <div className="space-y-6">
+          <div className="bg-[#111] dark:bg-[#000] p-6 rounded-2xl border-4 border-slate-300 dark:border-slate-800 shadow-inner text-cyan-400 font-mono flex flex-col gap-3">
+            <div className="text-sm text-slate-400 font-bold uppercase tracking-widest flex justify-between items-center">
+              <span>Physical Size</span>
+              <span className="bg-cyan-900/40 text-cyan-300 px-2 py-1 rounded-md text-xs">{inch}" {ratio}</span>
+            </div>
+            <div className="text-4xl sm:text-5xl font-bold tracking-tight digital-display truncate my-1">
+              {wMeters.toFixed(2)} <span className="text-slate-500 text-3xl">x</span> {hMeters.toFixed(2)} <span className="text-xl text-cyan-600">m</span>
+            </div>
+            
+            <div className="flex items-center gap-2 mt-1 mb-2">
+              <span className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-xs">建議製稿像素</span>
+              <span className="text-sm font-bold text-cyan-300">{recommendedPixel}</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 mt-2 pt-3 border-t border-cyan-900/40 text-sm text-center">
+              <div><span className="block text-slate-500 font-bold mb-1">短焦距</span><span className="font-bold text-cyan-300">{distShort}m</span></div>
+              <div className="border-x border-cyan-900/40"><span className="block text-slate-500 font-bold mb-1">標準距</span><span className="font-bold text-cyan-300">{distStd}m</span></div>
+              <div><span className="block text-slate-500 font-bold mb-1">長焦距</span><span className="font-bold text-cyan-300">{distLong}m</span></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white dark:bg-[#202024] p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">投影幕尺寸 (對角線吋)</label>
+              <div className="grid grid-cols-4 gap-2 mb-3">
+                {[100, 120, 150, 200].map(s => (
+                  <button key={s} onClick={()=>setInch(s)} className={`py-1.5 rounded text-sm font-bold transition ${inch === s ? 'bg-cyan-500 text-white shadow-md' : 'bg-slate-100 dark:bg-[#15151A] text-slate-600 dark:text-slate-400 border border-transparent hover:border-slate-300'}`}>{s}"</button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="number" step="10" value={inch} onChange={e=>setInch(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-[#15151A] text-lg font-bold p-2.5 rounded outline-none border focus:border-cyan-500 dark:border-slate-600" />
+              </div>
+            </div>
+            
+            <div className="bg-white dark:bg-[#202024] p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">畫面比例 (Aspect Ratio)</label>
+              <div className="flex gap-2 h-full pb-2">
+                <button onClick={()=>setRatio('16:9')} className={`flex-1 rounded-lg text-sm font-bold border-2 transition ${ratio === '16:9' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400 shadow-sm' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50'}`}>16:9 (寬螢幕)</button>
+                <button onClick={()=>setRatio('4:3')} className={`flex-1 rounded-lg text-sm font-bold border-2 transition ${ratio === '4:3' ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400 shadow-sm' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50'}`}>4:3 (傳統)</button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-cyan-50 dark:bg-cyan-900/10 border-l-4 border-cyan-500 p-4 rounded-r-lg">
+            <h4 className="flex items-center gap-2 text-sm font-bold text-cyan-800 dark:text-cyan-400 mb-1">
+              <Icon name="lightbulb" className="w-4 h-4" /> 場勘為什麼需要算這個？
+            </h4>
+            <p className="text-sm text-cyan-700 dark:text-cyan-500/80 leading-relaxed">
+              協助判斷投影機的架設位置（Throw Distance）。若現場深度不足以擺放標準鏡頭，就必須及早向硬體商改借「短焦鏡頭」；同時，提供設計端精確的「建議製稿像素」，能避免現場投出來的畫面文字模糊或四周被裁切。
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // 3. 空間與容留人數換算器
+    function SpaceCalculator() {
+      const [area, setArea] = useState(100);
+      const [unit, setUnit] = useState('ping'); // 'ping' or 'sqm'
+
+      const sqm = unit === 'ping' ? area * 3.305785 : area;
+      const ping = unit === 'sqm' ? area * 0.3025 : area;
+
+      // 容納人數公式 (已扣除基本走道舞台等折損)
+      const paxStanding = Math.floor(sqm / 0.8);    // 站立 0.8 sqm/人
+      const paxTheater = Math.floor(sqm / 1.2);     // 劇院 1.2 sqm/人
+      const paxClassroom = Math.floor(sqm / 2.0);   // 教室 2.0 sqm/人
+      const paxBanquet = Math.floor(sqm / 2.5);     // 圓桌 2.5 sqm/人
+
+      return (
+        <div className="space-y-6">
+          <div className="bg-[#111] dark:bg-[#000] p-6 rounded-2xl border-4 border-slate-300 dark:border-slate-800 shadow-inner text-amber-400 font-mono flex flex-col gap-3">
+            <div className="text-sm text-slate-400 font-bold uppercase tracking-widest flex justify-between items-center">
+              <span>Space Capacity</span>
+              <span className="bg-amber-900/40 text-amber-300 px-2 py-1 rounded-md text-xs">{ping.toFixed(1)} 坪 / {sqm.toFixed(1)} m²</span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-y-6 gap-x-4 mt-2">
+              <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                <span className="block text-xs font-bold text-slate-500 mb-1">劇院型 (排椅)</span>
+                <span className="text-3xl font-bold digital-display">{paxTheater} <span className="text-base text-amber-600 font-sans">人</span></span>
+              </div>
+              <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                <span className="block text-xs font-bold text-slate-500 mb-1">教室型 (含桌)</span>
+                <span className="text-3xl font-bold digital-display">{paxClassroom} <span className="text-base text-amber-600 font-sans">人</span></span>
+              </div>
+              <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                <span className="block text-xs font-bold text-slate-500 mb-1">圓桌宴會 (10人/桌)</span>
+                <span className="text-3xl font-bold digital-display">{paxBanquet} <span className="text-base text-amber-600 font-sans">人</span></span>
+              </div>
+              <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                <span className="block text-xs font-bold text-slate-500 mb-1">純站立 (演唱會)</span>
+                <span className="text-3xl font-bold digital-display">{paxStanding} <span className="text-base text-amber-600 font-sans">人</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-[#202024] p-5 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="flex justify-between items-center mb-4">
+              <label className="text-sm font-bold text-slate-600 dark:text-slate-300">輸入場地總面積</label>
+              <div className="flex bg-slate-100 dark:bg-[#15151A] rounded-lg p-1">
+                <button onClick={()=>{setUnit('ping'); setArea(Math.round(ping));}} className={`px-4 py-1.5 text-sm font-bold rounded ${unit==='ping'?'bg-white dark:bg-[#2A2B30] shadow text-amber-600 dark:text-amber-400':'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'}`}>坪數</button>
+                <button onClick={()=>{setUnit('sqm'); setArea(Math.round(sqm));}} className={`px-4 py-1.5 text-sm font-bold rounded ${unit==='sqm'?'bg-white dark:bg-[#2A2B30] shadow text-amber-600 dark:text-amber-400':'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'}`}>平方公尺</button>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <input type="number" value={area} onChange={e=>setArea(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-[#15151A] text-2xl font-bold p-3 rounded-lg outline-none border focus:border-amber-500 dark:border-slate-600 text-center" />
+            </div>
+          </div>
+
+          <div className="bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 p-4 rounded-r-lg">
+            <h4 className="flex items-center gap-2 text-sm font-bold text-amber-800 dark:text-amber-400 mb-1">
+              <Icon name="lightbulb" className="w-4 h-4" /> 場勘為什麼需要算這個？
+            </h4>
+            <p className="text-sm text-amber-700 dark:text-amber-500/80 leading-relaxed">
+              飯店或展館業務給的「百人場地」往往是極限塞滿的狀態。透過坪數與排型的快速換算，能扣除基本的舞台與走道消耗，立刻檢視場地是否能讓貴賓享有舒適的呼吸空間與行走動線，避免活動當天發生動線卡死的客訴。
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // 4. 大圖輸出解析度換算器
+    function PrintCalculator() {
+      const [widthCm, setWidthCm] = useState(300);
+      const [heightCm, setHeightCm] = useState(250);
+      const [dpi, setDpi] = useState(150);
+
+      // 公式: px = (cm / 2.54) * dpi
+      const pxW = Math.round((widthCm / 2.54) * dpi);
+      const pxH = Math.round((heightCm / 2.54) * dpi);
+
+      return (
+        <div className="space-y-6">
+          <div className="bg-[#111] dark:bg-[#000] p-6 rounded-2xl border-4 border-slate-300 dark:border-slate-800 shadow-inner text-rose-400 font-mono flex flex-col gap-2">
+            <div className="text-sm text-slate-400 font-bold uppercase tracking-widest flex justify-between items-center">
+              <span>File Resolution (Px)</span>
+              <span className="bg-rose-900/40 text-rose-300 px-2 py-1 rounded-md text-xs">{dpi} DPI</span>
+            </div>
+            <div className="text-4xl sm:text-5xl font-bold tracking-tight digital-display truncate my-1">
+              {pxW} <span className="text-slate-500 text-3xl">x</span> {pxH}
+            </div>
+            <div className="text-sm font-medium text-rose-500 mt-2 pt-3 border-t border-rose-900/40 flex justify-between">
+              <span>輸出實體尺寸: {widthCm} x {heightCm} cm</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-[#202024] p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">輸出寬度 (cm)</label>
+              <input type="number" value={widthCm} onChange={e=>setWidthCm(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-[#15151A] text-lg font-bold p-2.5 rounded outline-none border focus:border-rose-500 dark:border-slate-600" />
+            </div>
+            <div className="bg-white dark:bg-[#202024] p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">輸出高度 (cm)</label>
+              <input type="number" value={heightCm} onChange={e=>setHeightCm(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-[#15151A] text-lg font-bold p-2.5 rounded outline-none border focus:border-rose-500 dark:border-slate-600" />
+            </div>
+            <div className="bg-white dark:bg-[#202024] p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">要求解析度 (DPI)</label>
+              <select value={dpi} onChange={e=>setDpi(Number(e.target.value))} className="w-full bg-slate-50 dark:bg-[#15151A] text-sm font-bold p-3 rounded outline-none border focus:border-rose-500 dark:border-slate-600 cursor-pointer">
+                <option value="72">72 dpi (遠距大型帆布)</option>
+                <option value="150">150 dpi (一般展板/背板)</option>
+                <option value="300">300 dpi (近距文宣/海報)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="bg-rose-50 dark:bg-rose-900/10 border-l-4 border-rose-500 p-4 rounded-r-lg">
+            <h4 className="flex items-center gap-2 text-sm font-bold text-rose-800 dark:text-rose-400 mb-1">
+              <Icon name="lightbulb" className="w-4 h-4" /> 場勘為什麼需要算這個？
+            </h4>
+            <p className="text-sm text-rose-700 dark:text-rose-500/80 leading-relaxed">
+              測量背板或輸出牆面時，必須將「公分數」轉化為設計師聽得懂的「畫布像素(px)」。透過提前計算並預留四周 <strong>+3cm 的包邊出血區域</strong>，是避免現場施工時大圖文字被截斷或留下白邊的關鍵。
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // --- 主程式 ---
+    function CalculatorApp() {
+      const [activeTool, setActiveTool] = useState('led');
+
+      // 將 Icon 尺寸調整為 w-4 h-4 配合精簡選單
+      const tools = [
+        { id: 'led', title: 'LED 螢幕', desc: '間距與畫素換算', icon: <Icon name="monitor" className="w-4 h-4" />, color: 'bg-emerald-500', activeRing: 'ring-emerald-500' },
+        { id: 'projection', title: '投影與布幕', desc: '尺寸與投影距離', icon: <Icon name="projector" className="w-4 h-4" />, color: 'bg-cyan-500', activeRing: 'ring-cyan-500' },
+        { id: 'space', title: '空間容留', desc: '坪數換算與人數', icon: <Icon name="users" className="w-4 h-4" />, color: 'bg-amber-500', activeRing: 'ring-amber-500' },
+        { id: 'print', title: '大圖輸出', desc: '公分轉像素(px)', icon: <Icon name="printer" className="w-4 h-4" />, color: 'bg-rose-500', activeRing: 'ring-rose-500' }
+      ];
+
+      return (
+        <div className="h-full flex flex-col p-4 sm:p-8 animate-in fade-in transition-colors max-w-5xl mx-auto w-full">
+          
+          <header className="mb-5 shrink-0 text-center sm:text-left pt-2 sm:pt-0">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white flex items-center justify-center sm:justify-start gap-3">
+              <Icon name="calculator" className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600 dark:text-indigo-400" />
+              專業尺寸與空間換算機
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-1.5 text-sm">提供活動現場最常使用的硬體、空間與視覺檔案快速計算工具。</p>
+          </header>
+
+          {/* 精簡型功能頁籤選單列 (取代原本的大圖示網格，避免壓縮主要使用區域) */}
+          <div className="flex flex-wrap sm:flex-nowrap gap-1.5 p-1.5 bg-slate-100 dark:bg-[#202024] rounded-xl mb-6 shrink-0 border border-slate-200/50 dark:border-slate-800/50">
+            {tools.map(tool => (
+              <button 
+                key={tool.id}
+                onClick={() => setActiveTool(tool.id)}
+                className={`flex-1 min-w-[120px] sm:min-w-0 flex items-center justify-center gap-2.5 py-2 px-3 rounded-lg font-bold text-sm transition-all duration-200 ${
+                  activeTool === tool.id 
+                    ? 'bg-white dark:bg-[#2A2B30] text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-700' 
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                <div className={`p-1 rounded-md text-white ${tool.color} shrink-0`}>
+                  {tool.icon}
+                </div>
+                <span className="truncate">{tool.title}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* 工具主內容顯示區 - 具備自訂獨立滾動軸 */}
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pb-8">
+            {activeTool === 'led' && <LEDCalculator />}
+            {activeTool === 'projection' && <ProjectionCalculator />}
+            {activeTool === 'space' && <SpaceCalculator />}
+            {activeTool === 'print' && <PrintCalculator />}
+          </div>
+        </div>
+      );
+    }
+
+    // --- 初始化與根組件渲染 ---
+    function MainApp() {
+      const [theme, setTheme] = useState('light');
+
+      useEffect(() => {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          setTheme('dark');
+        }
+      }, []);
+
+      useEffect(() => {
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }, [theme]);
+
+      const toggleTheme = () => {
+        setTheme(prev => prev === 'light' ? 'dark' : 'light');
+      };
+
+      return (
+        <AppLayout activePage="calculator" theme={theme} toggleTheme={toggleTheme}>
+          <CalculatorApp />
+        </AppLayout>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<MainApp />);
+  </script>
+</body>
+</html>
